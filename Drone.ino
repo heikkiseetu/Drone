@@ -138,10 +138,10 @@ void loop(){
 
 /// FM signal from the transmitter 
 void FMinput(){
-  Ch1 = (pulseIn(2, HIGH, 25000)-1350)*100.0/255.0;
-  Ch2 = (pulseIn(3, HIGH, 250000)-1350)*100.0/258.5;
-  Ch3 = (pulseIn(4, HIGH, 2500000)-1210)*100.0/570.0;
-  Ch4 = (pulseIn(5, HIGH, 25000000)-1120)*100.0/743.5;
+  Ch1 = (pulseIn(2, HIGH, 25000)-1350);
+  Ch2 = (pulseIn(3, HIGH, 250000)-1350);
+  Ch3 = (pulseIn(4, HIGH, 2500000)-1210);
+  Ch4 = (pulseIn(5, HIGH, 25000000)-1120);
 //Ch5 =  pulseIn(6, HIGH, 250000000);   // Additional channel
 //Ch6 =  pulseIn(7, HIGH, 2500000000);  // Additional channel
 //Ch7 =  pulseIn(8, HIGH, 25000000000); // Additional channel
@@ -250,10 +250,10 @@ void read_mpu_9255_data(){                                           //Subroutin
   Wire.endTransmission();                                            //End the transmission
   Wire.requestFrom(0x68,16);                                         //Request 14 bytes from the MPU-6050
   while(Wire.available() < 16);                                      //Wait until all the bytes are received
-  accX =  Wire.read()<<8|Wire.read();                                //Add the low and high byte to the acc_x variable
-  accY =  Wire.read()<<8|Wire.read();                                //Add the low and high byte to the acc_y variable
-  accZ =  Wire.read()<<8|Wire.read();                                //Add the low and high byte to the acc_z variable
-  temp =  Wire.read()<<8|Wire.read();                                //Add the low and high byte to the temperature variable
+  accX  = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the acc_x variable
+  accY  = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the acc_y variable
+  accZ  = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the acc_z variable
+  temp  = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the temperature variable
   gyroX = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_x variable
   gyroY = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_y variable
   gyroZ = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_z variable
