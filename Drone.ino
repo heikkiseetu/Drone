@@ -121,7 +121,34 @@ void loop(){
   
   FMinput();                                                        //Read the FM signal  
   read_mpu_9255_data();                                             //Read the raw acc and gyro data from the MPU-6050
+  gyroDataProcessing();                                             //Process the raw data from gyro
+  PID();                                                            // Call the PID algorithm
+  output();                                                         // Output to esc's
+  
+  // Serial prints to the monitor
+  Serial.print("Pitch : ");
+  Serial.print(anglePitchOutput);
+  Serial.print("Roll : ");
+  Serial.println(angleRollOutput);
+  
+  while(micros() - loopTimer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
+  loopTimer = micros();                                              //Reset the loop timer
+}// End loop
+//////////////////////////////////////////////////////////////////////
 
+/// FM signal from the transmitter 
+void FMinput(){
+  Ch1 = (pulseIn(2, HIGH, 25000)-1350)*100.0/255.0;
+  Ch2 = (pulseIn(3, HIGH, 250000)-1350)*100.0/258.5;
+  Ch3 = (pulseIn(4, HIGH, 2500000)-1210)*100.0/570.0;
+  Ch4 = (pulseIn(5, HIGH, 25000000)-1120)*100.0/743.5;
+//Ch5 =  pulseIn(6, HIGH, 250000000);   // Additional channel
+//Ch6 =  pulseIn(7, HIGH, 2500000000);  // Additional channel
+//Ch7 =  pulseIn(8, HIGH, 25000000000); // Additional channel
+}// End FMinput
+///////////////////////////////////////////////////////////////////////
+void gyroDataProcessing(){
+  
   gyroX -= gyroXcal;                                                //Subtract the offset calibration value from the raw gyro_x value
   gyroY -= gyroYcal;                                                //Subtract the offset calibration value from the raw gyro_y value
   gyroZ -= gyroZcal;                                                //Subtract the offset calibration value from the raw gyro_z value
@@ -158,37 +185,9 @@ void loop(){
   //Complementary filter:
   anglePitchOutput = anglePitchOutput * 0.9 + anglePitch * 0.1;      //Take 90% of the output pitch value and add 10% of the raw pitch value
   angleRollOutput = angleRollOutput * 0.9 + angleRoll * 0.1;         //Take 90% of the output roll value and add 10% of the raw roll value
-
-  // Call the PID algorithm
-  PID();
-
-  // Output to esc's
-  output();
-  //
   
-  // Serial prints to the monitor
-  Serial.print("Pitch : ");
-  Serial.print(anglePitchOutput);
-  Serial.print("Roll : ");
-  Serial.println(angleRollOutput);
-  
-  while(micros() - loopTimer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
-  loopTimer = micros();                                              //Reset the loop timer
-}// End loop
+}// End gyroDataProcessing
 //////////////////////////////////////////////////////////////////////
-
-/// FM signal from the transmitter 
-void FMinput(){
-  Ch1 = (pulseIn(2, HIGH, 25000)-1350)*100.0/255.0;
-  Ch2 = (pulseIn(3, HIGH, 250000)-1350)*100.0/258.5;
-  Ch3 = (pulseIn(4, HIGH, 2500000)-1210)*100.0/570.0;
-  Ch4 = (pulseIn(5, HIGH, 25000000)-1120)*100.0/743.5;
-//Ch5 =  pulseIn(6, HIGH, 250000000);   // Additional channel
-//Ch6 =  pulseIn(7, HIGH, 2500000000);  // Additional channel
-//Ch7 =  pulseIn(8, HIGH, 25000000000); // Additional channel
-}// End FMinput
-///////////////////////////////////////////////////////////////////////
-
 /// PID loop
 void PID(){
   setpointX = map(Ch2, Ch2Low, Ch2High, -20, 20);                   //Setpoint between -20 and 20 degrees depending on the signal
@@ -251,10 +250,10 @@ void read_mpu_9255_data(){                                           //Subroutin
   Wire.endTransmission();                                            //End the transmission
   Wire.requestFrom(0x68,16);                                         //Request 14 bytes from the MPU-6050
   while(Wire.available() < 16);                                      //Wait until all the bytes are received
-  accX = Wire.read()<<8|Wire.read();                                 //Add the low and high byte to the acc_x variable
-  accY = Wire.read()<<8|Wire.read();                                 //Add the low and high byte to the acc_y variable
-  accZ = Wire.read()<<8|Wire.read();                                 //Add the low and high byte to the acc_z variable
-  temp = Wire.read()<<8|Wire.read();                                 //Add the low and high byte to the temperature variable
+  accX =  Wire.read()<<8|Wire.read();                                //Add the low and high byte to the acc_x variable
+  accY =  Wire.read()<<8|Wire.read();                                //Add the low and high byte to the acc_y variable
+  accZ =  Wire.read()<<8|Wire.read();                                //Add the low and high byte to the acc_z variable
+  temp =  Wire.read()<<8|Wire.read();                                //Add the low and high byte to the temperature variable
   gyroX = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_x variable
   gyroY = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_y variable
   gyroZ = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_z variable
