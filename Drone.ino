@@ -19,20 +19,16 @@
   RBesc -  D11
   LED   -  D13
 /////////////////////////////////////////////////////////////////////////////////////*/
--------------------------------//-----------------------------------------
+//-------------------------------//-----------------------------------------//
 //Include I2C & servolibrary 
 #include <Wire.h>
--------------------------------//-----------------------------------------
+//-------------------------------//-----------------------------------------//
 //Global variables
   // MPU 9255
   int gyroX, gyroY, gyroZ;
   long accX, accY, accZ, accTotalVector;
-  int temp;
   long gyroXcal, gyroYcal, gyroZcal;
   unsigned long loopTimer;
-  float anglePitch, angleRoll;
-  boolean setGyroAngles;
-  float angleRollAcc, anglePitchAcc;
   float anglePitchOutput, angleRollOutput;
 
 // FM channels
@@ -43,41 +39,30 @@
   int Ch3Mid  = 1500;
   int Ch2High = 2000;  
   int Ch3High = 2000;
-  //float Ch5, Ch6, Ch7;      // Additional channels
-  float setpointX, setpointY;
   
-// Channel pins
-  int pinCh1 = 2;
-  int pinCh2 = 3;
-  int pinCh3 = 4;
-  int pinCh4 = 5;
-  //int pinCh5 =; //Additional channelpins
-  //int pinCh6 =;
-  //int pinCh7 =;
-
-// ESC pins  
-  float LFesc, LBesc, RFesc, RBesc; 
+// ESC  
   float LFescOut, LBescOut, RFescOut, RBescOut; 
-  int pinRFesc = 6;
-  int pinRBesc = 9; 
-  int pinLFesc = 10; 
-  int pinLBesc = 11; 
   
 // PID constants
-  int Kp, Ki, Kd;
-  double elapsedTime;
-  double errorX, errorY, cumErrorX, cumErrorY, rateErrorX, rateErrorY;
-  double lastErrorX, lastErrorY; 
-  unsigned long previousTime, currentTime;
+  unsigned long previousTime
   double controlX, controlY;
-  double outX, outY;
--------------------------------//-----------------------------------------
+ 
+//-------------------------------//-----------------------------------------//
 
 void setup() {
   Wire.begin();                                                     //Start I2C as master
   Serial.begin(57600);                                              //Use only for debugging
   pinMode(13, OUTPUT);                                              //Set output 13 (LED) as output
 
+  int pinRFesc = 6;
+  int pinRBesc = 9; 
+  int pinLFesc = 10; 
+  int pinLBesc = 11; 
+  
+  int pinCh1 = 2;
+  int pinCh2 = 3;
+  int pinCh3 = 4;
+  int pinCh4 = 5;
  // Pins for FM channels
   pinMode(pinCh1, INPUT);  
   pinMode(pinCh2, INPUT);  
@@ -112,7 +97,7 @@ void setup() {
   previousTime = 0;                                                 //Setup PID timestamp
   digitalWrite(13, LOW);                                            //Indicate setup is done
 }// End setup
--------------------------------//-----------------------------------------
+//-------------------------------//-----------------------------------------//
 
 ////Main loop:
 void loop(){
@@ -137,7 +122,7 @@ void loop(){
   loopTimer = millis();                                              //Reset the loop timer
 
 }// End loop
--------------------------------//-----------------------------------------
+//-------------------------------//-----------------------------------------//
 
 /// FM signal from the transmitter 
 void FMinput(){
@@ -149,8 +134,12 @@ void FMinput(){
 //Ch6 =  pulseIn(7, HIGH, 2500000000);  // Additional channel
 //Ch7 =  pulseIn(8, HIGH, 25000000000); // Additional channel
 }// End FMinput
--------------------------------//-----------------------------------------
+//-------------------------------//-----------------------------------------//
 void gyroDataProcessing(){
+  // Local variables
+  float anglePitch, angleRoll;
+  boolean setGyroAngles;
+  float angleRollAcc, anglePitchAcc;
   
   gyroX -= gyroXcal;                                                 //Subtract the offset calibration value from the raw gyro_x value
   gyroY -= gyroYcal;                                                 //Subtract the offset calibration value from the raw gyro_y value
@@ -190,9 +179,16 @@ void gyroDataProcessing(){
   angleRollOutput = angleRollOutput * 0.9 + angleRoll * 0.1;         //Take 90% of the output roll value and add 10% of the raw roll value
   
 }// End gyroDataProcessing
--------------------------------//-----------------------------------------
+//-------------------------------//-----------------------------------------//
 /// PID loop
 void PID(){
+  //Local variables
+  int Kp, Ki, Kd;
+  double elapsedTime;
+  double errorX, errorY, cumErrorX, cumErrorY, rateErrorX, rateErrorY;
+  double lastErrorX, lastErrorY; 
+  float setpointX, setpointY;
+  unsigned long currentTime;
   
   setpointX = map(Ch2, Ch2Low, Ch2High, -20, 20);                   //Setpoint between -20 and 20 degrees depending on the signal
   setpointY = map(Ch3, Ch3Low, Ch3High, -20, 20);                   //Setpoint between -20 and 20 degrees depending on the signal
@@ -216,12 +212,12 @@ void PID(){
   
   previousTime = currentTime; //Time update
 }// End PID
--------------------------------//-----------------------------------------
+//-------------------------------//-----------------------------------------//
 
 /// Outputs to ESC's
 void output(){
   
-  //float LFesc, LBesc, RFesc, RBesc; 
+  float LFesc, LBesc, RFesc, RBesc; 
   //float LFescOut, LBescOut, RFescOut, RBescOut; 
   //int pinRFesc = 6;
   //int pinRBesc = 7;
@@ -248,7 +244,7 @@ void output(){
      
 
 } // End output 
--------------------------------//-----------------------------------------
+//-------------------------------//-----------------------------------------//
 
 // Data from the MPU 9255
 void read_mpu_9255_data(){                                           //Subroutine for reading the raw gyro and accelerometer data
@@ -265,7 +261,7 @@ void read_mpu_9255_data(){                                           //Subroutin
   gyroY = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_y variable
   gyroZ = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_z variable
 } // End data read
--------------------------------//-----------------------------------------
+//-------------------------------//-----------------------------------------//
 
 // Configurations for the MPU 9255
 void setup_mpu_9255_registers(){
@@ -285,4 +281,4 @@ void setup_mpu_9255_registers(){
   Wire.write(0x08);                                                  //Set the requested starting register
   Wire.endTransmission();                                            //End the transmission
 } // End registers
--------------------------------//-----------------------------------------
+//-------------------------------//-----------------------------------------//
