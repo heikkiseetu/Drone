@@ -19,17 +19,18 @@
   RBesc -  D11
   LED   -  D13
 /////////////////////////////////////////////////////////////////////////////////////*/
--------------------------------//-----------------------------------------
+//-------------------------------//-------------------------------//
 //Include I2C & servolibrary 
 #include <Wire.h>
--------------------------------//-----------------------------------------
+//-------------------------------//-------------------------------//
 //Global variables
   // MPU 9255
   int gyroX, gyroY, gyroZ;
   float anglePitchOutput, angleRollOutput;
   int loopTimer;
   long gyroXcal, gyroYcal, gyroZcal;
-
+  
+  
 // FM channels
   float Ch1, Ch2, Ch3, Ch4; // Primary channels
   int Ch2Low  = 1000; 
@@ -43,7 +44,7 @@
  
   float LFesc, LBesc, RFesc, RBesc; 
   
--------------------------------//-----------------------------------------
+//-------------------------------//-------------------------------//
 
 void setup() {
   Wire.begin();                                                     //Start I2C as master
@@ -94,7 +95,7 @@ void setup() {
   previousTime = 0;                                                 //Setup PID timestamp
   digitalWrite(13, LOW);                                            //Indicate setup is done
 }// End setup
--------------------------------//-----------------------------------------
+//-------------------------------//-------------------------------//
 
 ////Main loop:
 void loop(){
@@ -119,7 +120,7 @@ void loop(){
   loopTimer = millis();                                              //Reset the loop timer
 
 }// End loop
--------------------------------//-----------------------------------------
+//-------------------------------//-------------------------------//
 
 /// FM signal from the transmitter 
 void FMinput(){
@@ -131,7 +132,7 @@ void FMinput(){
 //Ch6 =  pulseIn(7, HIGH, 2500000000);  // Additional channel
 //Ch7 =  pulseIn(8, HIGH, 25000000000); // Additional channel
 }// End FMinput
--------------------------------//-----------------------------------------
+//-------------------------------//-------------------------------//
 void gyroDataProcessing(){
   // Local variables
   long accX, accY, accZ, accTotalVector;
@@ -177,7 +178,7 @@ void gyroDataProcessing(){
   angleRollOutput = angleRollOutput * 0.9 + angleRoll * 0.1;         //Take 90% of the output roll value and add 10% of the raw roll value
   
 }// End gyroDataProcessing
--------------------------------//-----------------------------------------
+//-------------------------------//-------------------------------//
 /// PID loop
 void PID(){
 // Local variables
@@ -211,7 +212,7 @@ void PID(){
   
   previousTime = currentTime; //Time update
 }// End PID
--------------------------------//-----------------------------------------
+//-------------------------------//-------------------------------//
 
 /// Outputs to ESC's
 void output(){
@@ -243,7 +244,7 @@ void output(){
      
 
 } // End output 
--------------------------------//-----------------------------------------
+//-------------------------------//-------------------------------//
 
 // Data from the MPU 9255
 void read_mpu_9255_data(){                                           //Subroutine for reading the raw gyro and accelerometer data
@@ -260,7 +261,7 @@ void read_mpu_9255_data(){                                           //Subroutin
   gyroY = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_y variable
   gyroZ = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_z variable
 } // End data read
--------------------------------//-----------------------------------------
+//-------------------------------//-------------------------------//
 
 // Configurations for the MPU 9255
 void setup_mpu_9255_registers(){
@@ -280,4 +281,4 @@ void setup_mpu_9255_registers(){
   Wire.write(0x08);                                                  //Set the requested starting register
   Wire.endTransmission();                                            //End the transmission
 } // End registers
--------------------------------//-----------------------------------------
+//-------------------------------//-------------------------------//
