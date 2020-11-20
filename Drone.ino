@@ -112,7 +112,7 @@ void loop(){
   //Serial.print(" LFesc:");
   //Serial.println(LFesc);
 
-  while(micros() - loopTimer < 8);                                   //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
+  while(millis() - loopTimer < 8);                                   //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
   loopTimer = millis();                                              //Reset the loop timer
 
 }// End loop
@@ -132,7 +132,7 @@ void FMinput(){
 void gyroDataProcessing(){
   // Local variables
   float anglePitch, angleRoll;
-  boolean setGyroAngles;
+  //boolean setGyroAngles;
   float angleRollAcc, anglePitchAcc;
   
   gyroX -= gyroXcal;                                                 //Subtract the offset calibration value from the raw gyro_x value
@@ -177,7 +177,9 @@ void gyroDataProcessing(){
 /// PID loop
 void PID(){
   //Local variables
-  int Kp, Ki, Kd;
+  int Kp = 1;
+  int Ki = 1;
+  int Kd = 1;
   double elapsedTime;
   double errorX, errorY, cumErrorX, cumErrorY, rateErrorX, rateErrorY;
   double lastErrorX, lastErrorY; 
