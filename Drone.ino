@@ -33,12 +33,12 @@
 
 // FM channels
   float Ch1, Ch2, Ch3, Ch4; // Primary channels
-  int Ch2Low  = 1000; 
-  int Ch3Low  = 1000; 
-  int Ch2Mid  = 1500; 
-  int Ch3Mid  = 1500;
-  int Ch2High = 2000;  
-  int Ch3High = 2000;
+  //int Ch2Low  = 1000; 
+  //int Ch3Low  = 1000; 
+  //int Ch2Mid  = 1500; 
+  //int Ch3Mid  = 1500;
+  //int Ch2High = 2000;  
+  //int Ch3High = 2000;
   
 // ESC  
   float LFescOut, LBescOut, RFescOut, RBescOut; 
@@ -53,30 +53,24 @@ void setup() {
   Wire.begin();                                                     //Start I2C as master
   Serial.begin(57600);                                              //Use only for debugging
   pinMode(13, OUTPUT);                                              //Set output 13 (LED) as output
-
-  int pinRFesc = 6;
-  int pinRBesc = 9; 
-  int pinLFesc = 10; 
-  int pinLBesc = 11; 
-  
-  int pinCh1 = 2;
-  int pinCh2 = 3;
-  int pinCh3 = 4;
-  int pinCh4 = 5;
  // Pins for FM channels
-  pinMode(pinCh1, INPUT);  
-  pinMode(pinCh2, INPUT);  
-  pinMode(pinCh3, INPUT);   
-  pinMode(pinCh4, INPUT);   
+  pinMode(1, INPUT);  
+  pinMode(2, INPUT);  
+  pinMode(3, INPUT);   
+  pinMode(4, INPUT);   
 //pinMode(pinCh5, INPUT);   // Additional
 //pinMode(pinCh6, INPUT);   // Additional
 //pinMode(pinCh7, INPUT);   // Additional
 
  // Pins for ESCs
-  pinMode(pinRFesc, OUTPUT); 
-  pinMode(pinLFesc, OUTPUT); 
-  pinMode(pinRBesc, OUTPUT); 
-  pinMode(pinLBesc, OUTPUT);   
+  //int pinRFesc = 6;
+  //int pinRBesc = 9; 
+  //int pinLFesc = 10; 
+  //int pinLBesc = 11; 
+  pinMode(6, OUTPUT); 
+  pinMode(9, OUTPUT); 
+  pinMode(10, OUTPUT); 
+  pinMode(11, OUTPUT);   
   
   setup_mpu_9255_registers();                                       //Setup the registers of the MPU-9255 (500dfs / +/-8g) and start the gyro
 
@@ -189,6 +183,10 @@ void PID(){
   double lastErrorX, lastErrorY; 
   float setpointX, setpointY;
   unsigned long currentTime;
+  int Ch2Low  = 1000; 
+  int Ch3Low  = 1000; 
+  int Ch2High = 2000;  
+  int Ch3High = 2000;
   
   setpointX = map(Ch2, Ch2Low, Ch2High, -20, 20);                   //Setpoint between -20 and 20 degrees depending on the signal
   setpointY = map(Ch3, Ch3Low, Ch3High, -20, 20);                   //Setpoint between -20 and 20 degrees depending on the signal
@@ -216,7 +214,8 @@ void PID(){
 
 /// Outputs to ESC's
 void output(){
-  
+  int Ch2Mid  = 1500; 
+  int Ch3Mid  = 1500;
   float LFesc, LBesc, RFesc, RBesc; 
   //float LFescOut, LBescOut, RFescOut, RBescOut; 
   //int pinRFesc = 6;
