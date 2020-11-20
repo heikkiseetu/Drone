@@ -13,25 +13,23 @@
   Ch2   -  D3 Roll        xx    xx    xx
   Ch3   -  D4 Pitch       xx    xx    xx 
   Ch4   -  D5 Yaw         xx    xx    xx
-
-  LFesc -  PWM
-  RFesc -  PWM
-  LBesc -  PWM
-  RBesc -  PWM
-
+  LFesc -  D6
+  RFesc -  D9
+  LBesc -  D10
+  RBesc -  D11
   LED   -  D13
 /////////////////////////////////////////////////////////////////////////////////////*/
-
+-------------------------------//-----------------------------------------
 //Include I2C & servolibrary 
 #include <Wire.h>
-////////////////////////////////////////////////////////////////////////////////////////
+-------------------------------//-----------------------------------------
 //Global variables
   // MPU 9255
   int gyroX, gyroY, gyroZ;
   long accX, accY, accZ, accTotalVector;
   int temp;
   long gyroXcal, gyroYcal, gyroZcal;
-  long loopTimer;
+  unsigned long loopTimer;
   float anglePitch, angleRoll;
   boolean setGyroAngles;
   float angleRollAcc, anglePitchAcc;
@@ -60,10 +58,10 @@
 // ESC pins  
   float LFesc, LBesc, RFesc, RBesc; 
   float LFescOut, LBescOut, RFescOut, RBescOut; 
-  int pinRFesc = 6; //Pitää vaihtaa PWM pineihin
-  int pinRBesc = 7; //Pitää vaihtaa PWM pineihin
-  int pinLFesc = 8; //Pitää vaihtaa PWM pineihin
-  int pinLBesc = 9; //Pitää vaihtaa PWM pineihin
+  int pinRFesc = 6;
+  int pinRBesc = 9; 
+  int pinLFesc = 10; 
+  int pinLBesc = 11; 
   
 // PID constants
   int Kp, Ki, Kd;
@@ -73,7 +71,7 @@
   unsigned long previousTime, currentTime;
   double controlX, controlY;
   double outX, outY;
-////////////////////////////////////////////////////////////////////////////////////////
+-------------------------------//-----------------------------------------
 
 void setup() {
   Wire.begin();                                                     //Start I2C as master
@@ -110,57 +108,62 @@ void setup() {
   gyroYcal /= 2000;                                                 //Divide the gyro_y_cal variable by 2000 to get the avarage offset
   gyroZcal /= 2000;                                                 //Divide the gyro_z_cal variable by 2000 to get the avarage offset
 
-  loopTimer = micros();                                             //Reset the loop timer
+  loopTimer = millis();                                             //Reset the loop timer
   previousTime = 0;                                                 //Setup PID timestamp
   digitalWrite(13, LOW);                                            //Indicate setup is done
 }// End setup
-//////////////////////////////////////////////////////////////////////
+-------------------------------//-----------------------------------------
 
 ////Main loop:
 void loop(){
   
-  FMinput();                                                        //Read the FM signal  
   read_mpu_9255_data();                                             //Read the raw acc and gyro data from the MPU-6050
   gyroDataProcessing();                                             //Process the raw data from gyro
-  PID();                                                            // Call the PID algorithm
-  output();                                                         // Output to esc's
-  
+  FMinput();                                                        //Read the FM signal
+  PID();                                                            //Call the PID algorithm
+  output();                                                         //Output to esc's
+ 
   // Serial prints to the monitor
   Serial.print("Pitch : ");
   Serial.print(anglePitchOutput);
   Serial.print("Roll : ");
-  Serial.println(angleRollOutput);
-  
-  while(micros() - loopTimer < 4000);                                //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
-  loopTimer = micros();                                              //Reset the loop timer
+  Serial.print(angleRollOutput);
+  //Serial.print(" RFesc:");
+  //Serial.print(RFesc);
+  //Serial.print(" LFesc:");
+  //Serial.println(LFesc);
+
+  while(micros() - loopTimer < 8);                                   //Wait until the loop_timer reaches 4000us (250Hz) before starting the next loop
+  loopTimer = millis();                                              //Reset the loop timer
+
 }// End loop
-//////////////////////////////////////////////////////////////////////
+-------------------------------//-----------------------------------------
 
 /// FM signal from the transmitter 
 void FMinput(){
-  Ch1 = (pulseIn(2, HIGH, 25000)-1350);
-  Ch2 = (pulseIn(3, HIGH, 250000)-1350);
-  Ch3 = (pulseIn(4, HIGH, 2500000)-1210);
-  Ch4 = (pulseIn(5, HIGH, 25000000)-1120);
+  Ch1 = (pulseIn(2, HIGH, 25000));
+  Ch2 = (pulseIn(3, HIGH, 250000));
+  Ch3 = (pulseIn(4, HIGH, 2500000));
+  Ch4 = (pulseIn(5, HIGH, 25000000));
 //Ch5 =  pulseIn(6, HIGH, 250000000);   // Additional channel
 //Ch6 =  pulseIn(7, HIGH, 2500000000);  // Additional channel
 //Ch7 =  pulseIn(8, HIGH, 25000000000); // Additional channel
 }// End FMinput
-///////////////////////////////////////////////////////////////////////
+-------------------------------//-----------------------------------------
 void gyroDataProcessing(){
   
-  gyroX -= gyroXcal;                                                //Subtract the offset calibration value from the raw gyro_x value
-  gyroY -= gyroYcal;                                                //Subtract the offset calibration value from the raw gyro_y value
-  gyroZ -= gyroZcal;                                                //Subtract the offset calibration value from the raw gyro_z value
+  gyroX -= gyroXcal;                                                 //Subtract the offset calibration value from the raw gyro_x value
+  gyroY -= gyroYcal;                                                 //Subtract the offset calibration value from the raw gyro_y value
+  gyroZ -= gyroZcal;                                                 //Subtract the offset calibration value from the raw gyro_z value
   
   //Gyro angle calculations
-  //0.0000611 = 1 / (250Hz / 65.5)
-  anglePitch += gyroX * 0.0000611;                                   //Calculate the traveled pitch angle and add this to the angle_pitch variable
-  angleRoll += gyroY * 0.0000611;                                    //Calculate the traveled roll angle and add this to the angle_roll variable
+  //0.000122137 = 1 / (125Hz / 65.5)
+  anglePitch += gyroX * 0.000122137;                                 //Calculate the traveled pitch angle and add this to the angle_pitch variable 
+  angleRoll  += gyroY * 0.000122137;                                 //Calculate the traveled roll angle and add this to the angle_roll variable 
   
-  //0.000001066 = 0.0000611 * (3.142(PI) / 180degr) The Arduino sin function is in radians
-  anglePitch += angleRoll * sin(gyroZ * 0.000001066);                //If the IMU has yawed transfer the roll angle to the pitch angel
-  angleRoll -= anglePitch * sin(gyroZ * 0.000001066);                //If the IMU has yawed transfer the pitch angle to the roll angel
+  //0.000002132 = 0.000122137 * (3.142(PI) / 180degr) The Arduino sin function is in radians
+  anglePitch += angleRoll * sin(gyroZ * 0.000002132);                //If the IMU has yawed transfer the roll angle to the pitch angel
+  angleRoll -= anglePitch * sin(gyroZ * 0.000002132);                //If the IMU has yawed transfer the pitch angle to the roll angel
   
   //Accelerometer angle calculations
   accTotalVector = sqrt((accX*accX)+(accY*accY)+(accZ*accZ));        //Calculate the total accelerometer vector
@@ -187,13 +190,14 @@ void gyroDataProcessing(){
   angleRollOutput = angleRollOutput * 0.9 + angleRoll * 0.1;         //Take 90% of the output roll value and add 10% of the raw roll value
   
 }// End gyroDataProcessing
-//////////////////////////////////////////////////////////////////////
+-------------------------------//-----------------------------------------
 /// PID loop
 void PID(){
+  
   setpointX = map(Ch2, Ch2Low, Ch2High, -20, 20);                   //Setpoint between -20 and 20 degrees depending on the signal
   setpointY = map(Ch3, Ch3Low, Ch3High, -20, 20);                   //Setpoint between -20 and 20 degrees depending on the signal
   
-  currentTime = millis();                                           //Get current time
+  currentTime = loopTimer;                                          //Get current time
   elapsedTime = (double)(previousTime - currentTime);
 
   errorX = setpointX - angleRollOutput ;                            // X:Roll  Tarkista kanava ja akseli!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -212,10 +216,11 @@ void PID(){
   
   previousTime = currentTime; //Time update
 }// End PID
-///////////////////////////////////////////////////////////////////////
+-------------------------------//-----------------------------------------
 
 /// Outputs to ESC's
 void output(){
+  
   //float LFesc, LBesc, RFesc, RBesc; 
   //float LFescOut, LBescOut, RFescOut, RBescOut; 
   //int pinRFesc = 6;
@@ -224,24 +229,26 @@ void output(){
   //int pinLBesc = 9;
   //Ch1 = base value
   
-  if(Ch2 >= Ch2Low && Ch2 < Ch2Mid){  // Roll vasemmalle 
+  if(Ch2 < Ch2Mid){  // Roll vasemmalle 
     RFesc = Ch1 + Ch1*controlX*0,1;
     RBesc = Ch1 + Ch1*controlX*0,1;  }
 
-  if(Ch2 > Ch2Mid && Ch2 <= Ch2High){ // Roll oikealle
+  if(Ch2 > Ch2Mid){ // Roll oikealle
     LFesc = Ch1 + Ch1*controlX*(-1)*0,1;
     LBesc = Ch1 + Ch1*controlX*(-1)*0,1; }
 
-  if(Ch3 >= Ch3Low && Ch3 < Ch3Mid){  // Yaw ylös
+  if(Ch3 < Ch3Mid){  // Yaw ylös
     RFesc = Ch1 + Ch1*controlY*0,1;
     LFesc = Ch1 + Ch1*controlY*0,1; } 
   
-  if(Ch3 > Ch3Mid && Ch3 <= Ch3High){ // Yaw alas
+  if(Ch3 > Ch3Mid){ // Yaw alas
     RBesc = Ch1 + Ch1*controlY*(-1)*0,1;
-    LBesc = Ch1 + Ch1*controlY*(-1)*0,1; } 
+    LBesc = Ch1 + Ch1*controlY*(-1)*0,1; }
+
+     
 
 } // End output 
-///////////////////////////////////////////////////////////////////////
+-------------------------------//-----------------------------------------
 
 // Data from the MPU 9255
 void read_mpu_9255_data(){                                           //Subroutine for reading the raw gyro and accelerometer data
@@ -258,7 +265,7 @@ void read_mpu_9255_data(){                                           //Subroutin
   gyroY = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_y variable
   gyroZ = Wire.read()<<8|Wire.read();                                //Add the low and high byte to the gyro_z variable
 } // End data read
-///////////////////////////////////////////////////////////////////////
+-------------------------------//-----------------------------------------
 
 // Configurations for the MPU 9255
 void setup_mpu_9255_registers(){
@@ -278,4 +285,4 @@ void setup_mpu_9255_registers(){
   Wire.write(0x08);                                                  //Set the requested starting register
   Wire.endTransmission();                                            //End the transmission
 } // End registers
-///////////////////////////////////////////////////////////////////////
+-------------------------------//-----------------------------------------
